@@ -1,5 +1,87 @@
-# Karma Defence Codes
-Karma Defence codes released on Play Store (2021)
+*[한국어] | [English](README_EN.md)*
 
-[![Karma Defence Play](https://img.youtube.com/vi/o5AaV3zBt2k/0.jpg)](https://www.youtube.com/watch?v=o5AaV3zBt2k)
+# 😈 악마는 저리가 (Karma Defence)
 
+악마들과 전투를 벌이며 석상을 지켜야 하는 디펜스 게임  
+프로그래밍 전체를 담당했으며, 오브젝트 풀링·퀘스트 시스템·커스텀 에디터를 직접 설계 및 구현했습니다
+
+[![Karma Defence Demo](https://img.youtube.com/vi/o5AaV3zBt2k/0.jpg)](https://www.youtube.com/watch?v=o5AaV3zBt2k)
+
+[▶ Google Play Store](https://play.google.com/store/apps/details?id=com.nineteengames.karmadefence&hl=en_US&gl=US) `서비스 종료 (안드로이드 버전 미대응)`
+
+| 항목 | 내용 |
+|------|------|
+| 장르 | 디펜스 |
+| 엔진 | Unity (C#) |
+| 플랫폼 | Android |
+| 제작 기간 | 2020.07 ~ 2021.03 |
+
+## 주요기능
+
+- **오브젝트 풀링**: 다종 유닛을 단일 부모 오브젝트 아래 번갈아 배치하고 인덱스 공식으로 활성화해 메모리 효율을 높였습니다
+- **퀘스트 시스템**: 스테이지별 퀘스트 완료 여부를 PlayerPrefs로 영구 저장하고, 중복 완료 방지 로직으로 별 개수 정합성을 보장합니다
+- **커스텀 에디터**: 유닛 타입(근접·원거리)에 따라 불필요한 인스펙터 필드를 숨기고, 수치 변수는 슬라이더로 표현해 작업 효율을 높였습니다
+- **영구·일시 강화**: 퀘스트 별 개수로 영구 강화, 스테이지 재화로 일시 강화를 분리 설계했습니다
+
+## 코드 구조
+
+```
+Karma-Defence-Codes/
+├── Common/         # 오브젝트 풀링 등 공통 유틸리티
+├── Manager/        # 스테이지, 퀘스트, 강화 매니저
+├── UI/             # UI 제어 스크립트
+├── PlayerMove.cs   # 플레이어 이동 및 능력
+├── FollowCam.cs    # 카메라 추적
+├── NameSpace.cs    # 공용 데이터 구조 정의
+├── Debug.cs        # 릴리즈용 디버그 래퍼
+├── enableOff.cs    # 오브젝트 활성화 제어
+└── readOnly.cs     # ReadOnly 커스텀 어트리뷰트
+```
+
+## 주요 구현
+
+### 1. 다중 유닛 오브젝트 풀링
+
+다양한 유닛 종류를 하나의 부모 오브젝트 아래에서 효율적으로 관리하는 풀링 시스템입니다.
+
+**핵심 설계**
+
+- 초기화 시 유닛 종류를 번갈아 가며 풀 생성 (예: 3종 → `0 1 2 0 1 2 ...`)
+- 활성화 요청 시 해당 유닛 인덱스에서 시작해 비활성 슬롯을 순차 탐색
+- 유닛 풀이 부족할 경우 동적으로 풀 크기를 두 배로 확장
+
+스폰 대기시간은 `spawnTime[배열 길이 / 유닛 종류 * 유닛 인덱스 + 현재 스테이지]` 공식으로 유닛 종류와 스테이지마다 다른 쿨타임을 1차원 배열 하나로 관리합니다.
+
+### 2. 스테이지별 퀘스트 시스템
+
+각 스테이지마다 최대 3개의 퀘스트를 제공하고, 완료 시 별(★)을 획득합니다.
+
+**핵심 설계**
+
+- 퀘스트 완료 여부를 `PlayerPrefs`로 영구 저장
+- 키 구조: `스테이지 번호 + 퀘스트 인덱스` (예: 1스테이지 3번 퀘스트 → `"13"`)
+- 중복 완료 방지 로직으로 별 개수 정합성 보장
+
+**퀘스트 종류**: 스테이지 클리어, 특정 유닛 N명 이상 소환 등
+
+### 3. 유닛 타입별 커스텀 에디터
+
+유닛 타입(`Shooter` / `Fighter`)에 따라 불필요한 인스펙터 필드를 자동으로 숨겨 작업 혼란을 방지합니다.
+
+| 유닛 타입 | 표시 필드 |
+|-----------|-----------|
+| Shooter (원거리) | Projectile, ShootPos |
+| Fighter (근접) | AttackSound |
+| 공통 | Damage, AttackRange, AttackSpeed, Speed, IncHp, IncDam, DecAttSp |
+
+공통 수치 값은 슬라이더로 표현해 직관적인 편집이 가능합니다.
+
+**사용법**
+
+1. `Unit` 스크립트의 `Class` 필드에서 유닛 타입을 선택합니다
+2. 해당 타입에 맞는 필드만 인스펙터에 표시됩니다
+3. Damage 등 수치 변수는 슬라이더로 바로 조정 가능합니다
+
+## 라이선스
+
+[MIT License](LICENSE)
