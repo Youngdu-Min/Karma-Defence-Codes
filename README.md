@@ -27,16 +27,19 @@ Solely responsible for all programming — including object pooling, quest syste
 - **Quest System**: Quest completion per stage is persisted via PlayerPrefs with duplicate prevention logic to ensure star count integrity
 - **Custom Editor**: Hides irrelevant inspector fields based on unit type (melee / ranged) and displays numeric values as sliders for faster iteration
 - **Permanent & Temporary Upgrades**: Permanent upgrades are unlocked by accumulated quest stars; temporary upgrades are purchased with in-stage currency
+- **Three-Resource Loop**: Time-regenerating currency buys units and skills, kill gold buys in-stage upgrades, and quest stars buy permanent upgrades across stages
+- **Unit Combat AI**: A single component drives both melee and ranged units; each unit targets only the nearest enemy ahead of it and checks range as `attack range + target size`
+- **Release Log Stripping**: A global `Debug` wrapper marks `Log` with `[Conditional("UNITY_EDITOR")]`, so log calls are removed from builds at compile time
 
 ## Code Structure
 
 ```
 Karma-Defence-Codes/
-├── Common/         # Shared utilities including object pooling
+├── Common/         # Units (movement, combat, health, spawn pooling) and damage (projectiles, skills)
 ├── Editor/         # Custom inspector per unit type
-├── Manager/        # Stage, quest, and upgrade managers
-├── UI/             # UI control scripts
-├── PlayerMove.cs   # Player movement and abilities
+├── Manager/        # Game flow & quests, skills, scene transitions
+├── UI/             # Upgrade buttons, currency, stage select, sound and other UI
+├── PlayerMove.cs   # Touch movement for the archangel
 ├── FollowCam.cs    # Camera follow logic
 ├── NameSpace.cs    # Shared data structure definitions
 ├── Debug.cs        # Release-safe debug wrapper
@@ -53,11 +56,11 @@ A pooling system that efficiently manages multiple unit types under a single par
 **Core Design**
 
 - On initialization, units are instantiated in alternating order (e.g. 3 types → `0 1 2 0 1 2 ...`)
-- On spawn, the system scans forward from the requested unit's index to find the next inactive slot
+- On spawn, the system starts at the requested unit's index and steps by the number of unit types, checking only slots of the same type for an inactive one
 - If the pool is exhausted, its size doubles dynamically via reallocation
 
 Spawn cooldowns are managed with a single 1D array using the formula:  
-`spawnTime[(arrayLength / unitTypes) * unitIndex + currentStage]`  
+`spawnTime[(arrayLength / unitTypes) * unitIndex + (currentStage - 1)]`  
 This maps each combination of unit type and stage to a unique cooldown without nested structures.
 
 ### 2. Per-Stage Quest System
@@ -67,10 +70,12 @@ Up to 3 quests are available per stage, and completing them awards stars (★).
 **Core Design**
 
 - Quest completion is persisted via `PlayerPrefs`
-- Key format: `stageNumber + questIndex` (e.g. Stage 1, Quest 3 → `"13"`)
+- Key format: `stageNumber + questIndex` (quest index starts at 0, e.g. Stage 1, third quest → `"12"`)
 - Duplicate completion is prevented to maintain accurate star counts
 
-**Quest Types**: Stage clear, spawn N or more units of a specific type, etc.
+**Quest Types (10)**: stage clear, units spawned, kills (total / archangel skill / warrior / archer), skill hits on the boss, upgrade count, statue health kept, units kept alive
+
+The kill cause is counted from the damage source passed with each hit (`"Sword"`, `"Bow"`, `"Skill"`), based on the final blow.
 
 ### 3. Unit Type–Based Custom Editor
 
