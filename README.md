@@ -33,6 +33,7 @@ Solely responsible for all programming — including object pooling, quest syste
 ```
 Karma-Defence-Codes/
 ├── Common/         # Shared utilities including object pooling
+├── Editor/         # Custom inspector per unit type
 ├── Manager/        # Stage, quest, and upgrade managers
 ├── UI/             # UI control scripts
 ├── PlayerMove.cs   # Player movement and abilities
@@ -88,6 +89,10 @@ Shared numeric values are displayed as sliders for intuitive editing.
 1. Select the unit type from the `Class` field on the `Unit` script
 2. Only the relevant fields for that type will appear in the inspector
 3. Numeric values such as Damage can be adjusted directly via slider
+
+## Technical Document
+
+Internal design details (multi-type unit pooling, quest & star economy, two-tier upgrades, unit combat AI, editor tools) are documented in the [technical document](docs/TechnicalDesign.md) (Korean).
 
 ## License
 
